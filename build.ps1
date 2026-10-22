@@ -27,7 +27,7 @@ try {
 
   # 只带运行必需的 + 说明文档；不带 test/ 和 dist/
   Copy-Item $manifestPath $stageRoot
-  foreach ($item in 'src', 'assets', 'userscript', 'README.md') {
+  foreach ($item in 'src', 'assets', 'userscript', 'README.md', 'LICENSE') {
     $p = Join-Path $root $item
     if (Test-Path $p) {
       Copy-Item $p -Destination $stageRoot -Recurse

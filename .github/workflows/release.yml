@@ -1,0 +1,85 @@
+name: Release
+
+# 推送 v* 标签即自动：跑测试 → 打包 → 创建 Release 并挂上 zip
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 准备 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 运行测试
+        run: npm test
+
+      - name: 读取版本号
+        id: v
+        run: |
+          VERSION=$(node -p "require('./manifest.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          echo "manifest 版本：$VERSION，触发标签：${GITHUB_REF_NAME}"
+
+      - name: 打包
+        # 用 git archive 打包被 git 跟踪的文件，并按 .gitattributes 里的
+        # export-ignore 自动排除 test / preview / docs 等开发文件。
+        # 产物结构：bili-comment-filter/manifest.json 在 zip 根部文件夹内。
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          OUT="dist/bili-comment-filter-v${{ steps.v.outputs.version }}.zip"
+          git archive --format=zip --prefix=bili-comment-filter/ -o "$OUT" HEAD
+          ls -lh dist
+
+      - name: 校验包内结构
+        run: |
+          set -euo pipefail
+          unzip -l dist/*.zip > /tmp/list.txt
+          cat /tmp/list.txt
+          grep -q "bili-comment-filter/manifest.json" /tmp/list.txt
+          echo "✓ manifest.json 位于 bili-comment-filter/ 根目录"
+
+      - name: 发布 Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip
+          name: 清塘 v${{ steps.v.outputs.version }}
+          body: |
+            ## 清塘 v${{ steps.v.outputs.version }}
+
+            过滤 B站评论区里的 AI agent 刷屏评论（俗称「大肥鱼」）。
+            纯本地运行：不上传任何数据，不碰登录态，不发外部请求。
+
+            ### 安装（Edge / Chrome）
+
+            1. 下载下方的 `bili-comment-filter-v${{ steps.v.outputs.version }}.zip` 并**解压**
+            2. 把解压出的 `bili-comment-filter` 文件夹放到一个**固定位置**
+               > 别放「下载」或「桌面」然后清理掉，文件夹挪动后扩展会失效
+            3. 打开 `edge://extensions`（Chrome 用 `chrome://extensions`）
+            4. 打开「开发人员模式」→「加载解压缩的扩展」→ 选包含 `manifest.json` 的那一层文件夹
+
+            ### 不想装扩展？
+
+            用油猴单文件版：[`userscript/bili-comment-filter.user.js`](https://github.com/${{ github.repository }}/blob/main/userscript/bili-comment-filter.user.js)
+
+            ### 第一次用建议
+
+            先开「预览模式」（只统计不隐藏），刷新页面看右下角浮标提示的可屏蔽条数，
+            确认没有误伤真人评论后再关掉。
+        draft: false
+        prerelease: false

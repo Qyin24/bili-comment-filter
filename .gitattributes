@@ -8,4 +8,13 @@
 *.ico binary
 *.zip binary
 
-# PowerShell 脚本建议保留 CRLF 兼容性由 eol=lf 统一处理即可
+# ── 以下内容不进入发布包（git archive 会跳过它们）──────────
+# 发布包 = 解压即用的扩展，只需 manifest + src + assets + userscript + 说明
+/test export-ignore
+/preview export-ignore
+/docs export-ignore
+/.github export-ignore
+/build.ps1 export-ignore
+/package.json export-ignore
+/.gitignore export-ignore
+/.gitattributes export-ignore

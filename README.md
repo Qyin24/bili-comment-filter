@@ -222,6 +222,15 @@ http://127.0.0.1:8787/src/popup.html?preview=1&theme=light
 pwsh -File build.ps1   # 产出 dist/bili-comment-filter-v<version>.zip
 ```
 
+### 发布
+
+推一个 `v*` 标签即可，GitHub Actions 会自动跑测试、打包、创建 Release 并把 zip 挂上去（见 `.github/workflows/release.yml`）：
+
+```bash
+git tag v1.2.0
+git push origin v1.2.0
+```
+
 ### 目录结构
 
 ```
