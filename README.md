@@ -18,19 +18,21 @@
 
 ## 截图
 
+> 如果图片显示不出来（部分网络环境会拦截 GitHub 图床 `camo.githubusercontent.com`），可以直接打开 [`docs/screenshots/`](docs/screenshots) 目录查看原图。
+
 设置页（深色）：
 
-![设置页 深色](https://cdn.jsdelivr.net/gh/Qyin24/bili-comment-filter@main/docs/screenshots/options-dark.png)
+![设置页 深色](docs/screenshots/options-dark.png)
 
 设置页（浅色）：
 
-![设置页 浅色](https://cdn.jsdelivr.net/gh/Qyin24/bili-comment-filter@main/docs/screenshots/options-light.png)
+![设置页 浅色](docs/screenshots/options-light.png)
 
 工具栏弹窗：
 
 <p>
-  <img src="https://cdn.jsdelivr.net/gh/Qyin24/bili-comment-filter@main/docs/screenshots/popup-dark.png" alt="弹窗 深色" width="300" />
-  <img src="https://cdn.jsdelivr.net/gh/Qyin24/bili-comment-filter@main/docs/screenshots/popup-light.png" alt="弹窗 浅色" width="300" />
+  <img src="docs/screenshots/popup-dark.png" alt="弹窗 深色" width="300" />
+  <img src="docs/screenshots/popup-light.png" alt="弹窗 浅色" width="300" />
 </p>
 
 ---
