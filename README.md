@@ -20,17 +20,17 @@
 
 设置页（深色）：
 
-![设置页 深色](docs/screenshots/options-dark.png)
+![设置页 深色](https://cdn.jsdelivr.net/gh/Qyin24/bili-comment-filter@main/docs/screenshots/options-dark.png)
 
 设置页（浅色）：
 
-![设置页 浅色](docs/screenshots/options-light.png)
+![设置页 浅色](https://cdn.jsdelivr.net/gh/Qyin24/bili-comment-filter@main/docs/screenshots/options-light.png)
 
 工具栏弹窗：
 
 <p>
-  <img src="docs/screenshots/popup-dark.png" alt="弹窗 深色" width="300" />
-  <img src="docs/screenshots/popup-light.png" alt="弹窗 浅色" width="300" />
+  <img src="https://cdn.jsdelivr.net/gh/Qyin24/bili-comment-filter@main/docs/screenshots/popup-dark.png" alt="弹窗 深色" width="300" />
+  <img src="https://cdn.jsdelivr.net/gh/Qyin24/bili-comment-filter@main/docs/screenshots/popup-light.png" alt="弹窗 浅色" width="300" />
 </p>
 
 ---
