@@ -81,5 +81,5 @@ jobs:
 
             先开「预览模式」（只统计不隐藏），刷新页面看右下角浮标提示的可屏蔽条数，
             确认没有误伤真人评论后再关掉。
-        draft: false
-        prerelease: false
+          draft: false
+          prerelease: false
