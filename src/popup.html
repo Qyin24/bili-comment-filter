@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>清塘 · B站评论区过滤器</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header class="qt-head">
+    <svg class="qt-mark" viewBox="0 0 32 32" aria-hidden="true">
+      <defs>
+        <linearGradient id="qtG" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#3ACDBB" />
+          <stop offset="1" stop-color="#156660" />
+        </linearGradient>
+      </defs>
+      <rect width="32" height="32" rx="9.5" fill="url(#qtG)" />
+      <ellipse cx="16" cy="22.4" rx="9.4" ry="2.1" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="1.1" />
+      <ellipse cx="16" cy="22.4" rx="5.4" ry="1.15" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="1" />
+      <ellipse cx="13.3" cy="13" rx="5.1" ry="3.3" fill="#fff" />
+      <path d="M18 13 L22.8 9.7 L22.8 16.3 Z" fill="#fff" />
+      <circle cx="11.3" cy="12.2" r=".95" fill="#156660" />
+    </svg>
+    <div class="qt-head__text">
+      <h1>清塘</h1>
+      <p>B站评论区过滤器</p>
+    </div>
+    <div class="qt-head__right">
+      <button type="button" class="qt-theme-btn" id="themeBtn" title="切换外观：自动">◐</button>
+      <span class="qt-ver" id="version">v1.2.0</span>
+    </div>
+  </header>
+
+  <main class="qt-body">
+    <!-- 主状态 -->
+    <section class="qt-hero" id="hero">
+      <div class="qt-hero__row">
+        <div class="qt-hero__label">
+          <span class="qt-hero__title">清塘中</span>
+          <span class="qt-hero__sub" id="heroSub">正在过滤评论区</span>
+        </div>
+        <input type="checkbox" id="enabled" class="qt-switch qt-switch--lg" />
+      </div>
+    </section>
+
+    <!-- 规则 -->
+    <section class="qt-card">
+      <div class="qt-card__head">规则</div>
+
+      <label class="qt-row">
+        <span class="qt-row__main">
+          过滤「开头是 @」的一级评论
+          <em>楼中楼的 @ 回复不受影响</em>
+        </span>
+        <input type="checkbox" id="blockAtPrefix" class="qt-switch" />
+      </label>
+
+      <label class="qt-row">
+        <span class="qt-row__main">
+          关键词屏蔽
+          <em id="kwCount">—</em>
+        </span>
+        <input type="checkbox" id="keywordEnabled" class="qt-switch" />
+      </label>
+    </section>
+
+    <!-- 预览 -->
+    <section class="qt-card">
+      <div class="qt-card__head">调试</div>
+      <label class="qt-row">
+        <span class="qt-row__main">
+          预览模式
+          <em>只统计不隐藏，用来验证是否误伤</em>
+        </span>
+        <input type="checkbox" id="previewOnly" class="qt-switch" />
+      </label>
+    </section>
+
+    <button class="qt-btn" id="openOptions">管理关键词与设置</button>
+
+    <p class="qt-tip" id="tip">配置改动后需 <b>刷新页面</b> 生效</p>
+  </main>
+
+  <script src="keywords.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>清塘 · B站评论区过滤器</title>
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <div class="qt-shell">
+    <!-- ── 侧栏 ────────────────────────────────── -->
+    <aside class="qt-side">
+      <div class="qt-brand">
+        <svg class="qt-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <defs>
+            <linearGradient id="qtG" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#3ACDBB" />
+              <stop offset="1" stop-color="#156660" />
+            </linearGradient>
+          </defs>
+          <rect width="32" height="32" rx="9.5" fill="url(#qtG)" />
+          <ellipse cx="16" cy="22.4" rx="9.4" ry="2.1" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="1.1" />
+          <ellipse cx="16" cy="22.4" rx="5.4" ry="1.15" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="1" />
+          <ellipse cx="13.3" cy="13" rx="5.1" ry="3.3" fill="#fff" />
+          <path d="M18 13 L22.8 9.7 L22.8 16.3 Z" fill="#fff" />
+          <circle cx="11.3" cy="12.2" r=".95" fill="#156660" />
+        </svg>
+        <div class="qt-brand__text">
+          <strong>清塘</strong>
+          <span>B站评论区过滤器</span>
+        </div>
+      </div>
+
+      <nav class="qt-nav" id="qtNav">
+        <a href="#basic" class="qt-nav__item is-active">
+          <span class="qt-nav__dot"></span>基础规则
+        </a>
+        <a href="#keywords" class="qt-nav__item">
+          <span class="qt-nav__dot"></span>关键词屏蔽
+        </a>
+        <a href="#builtin" class="qt-nav__item">
+          <span class="qt-nav__dot"></span>内置词库
+        </a>
+        <a href="#custom" class="qt-nav__item">
+          <span class="qt-nav__dot"></span>自定义词
+        </a>
+        <a href="#display" class="qt-nav__item">
+          <span class="qt-nav__dot"></span>预览与显示
+        </a>
+      </nav>
+
+      <div class="qt-theme">
+        <span class="qt-theme__label">外观</span>
+        <div class="qt-seg" id="themeSeg">
+          <button type="button" class="qt-seg__btn" data-theme-value="auto">自动</button>
+          <button type="button" class="qt-seg__btn" data-theme-value="dark">深色</button>
+          <button type="button" class="qt-seg__btn" data-theme-value="light">浅色</button>
+        </div>
+      </div>
+
+      <div class="qt-side__stat" id="sideStat">
+        <span class="qt-side__stat-num" id="sideKwNum">—</span>
+        <span class="qt-side__stat-label">个关键词生效中</span>
+      </div>
+
+      <div class="qt-side__foot">
+        <span id="sideVersion">v1.1.0</span>
+        <span class="qt-side__dot">·</span>
+        <span>纯本地运行</span>
+      </div>
+    </aside>
+
+    <!-- ── 主区 ────────────────────────────────── -->
+    <main class="qt-main">
+      <header class="qt-page-head">
+        <h2>设置</h2>
+        <p>
+          把评论区的 AI 刷屏（俗称「大肥鱼」）清出去。
+          只在你自己的浏览器里改写评论数据——不上传任何内容，不碰登录态。
+        </p>
+      </header>
+
+      <!-- 一、基础规则 -->
+      <section class="qt-section" id="basic">
+        <div class="qt-section__head">
+          <h3>基础规则</h3>
+          <span class="qt-section__hint">决定「怎么判」</span>
+        </div>
+
+        <label class="qt-row">
+          <span class="qt-row__main">
+            总开关
+            <em>关闭后所有过滤立刻停止，刷新页面即恢复原样。</em>
+          </span>
+          <input type="checkbox" id="enabled" class="qt-switch" />
+        </label>
+
+        <label class="qt-row">
+          <span class="qt-row__main">
+            过滤「开头是 @」的一级评论
+            <em>
+              只有正文以 <code>@</code> 开头、且确实 @ 了人的一级评论才会被隐藏。楼中楼的 @ 回复永远不受这条影响。
+            </em>
+          </span>
+          <input type="checkbox" id="blockAtPrefix" class="qt-switch" />
+        </label>
+
+        <label class="qt-row">
+          <span class="qt-row__main">
+            豁免自己发的评论
+            <em>避免把自己的评论也藏起来。</em>
+          </span>
+          <input type="checkbox" id="exemptSelf" class="qt-switch" />
+        </label>
+
+        <label class="qt-row">
+          <span class="qt-row__main">
+            豁免 UP 主置顶评论
+            <em>置顶一般是重要信息，不建议过滤。</em>
+          </span>
+          <input type="checkbox" id="exemptPinned" class="qt-switch" />
+        </label>
+      </section>
+
+      <!-- 二、关键词屏蔽 -->
+      <section class="qt-section" id="keywords">
+        <div class="qt-section__head">
+          <h3>关键词屏蔽</h3>
+          <span class="qt-section__hint">决定「靠什么词判」</span>
+        </div>
+
+        <label class="qt-row">
+          <span class="qt-row__main">启用关键词屏蔽</span>
+          <input type="checkbox" id="keywordEnabled" class="qt-switch" />
+        </label>
+
+        <label class="qt-row qt-row--accent">
+          <span class="qt-row__main">
+            关键词只作用于「带 @ 的评论」
+            <em>
+              建议保持开启。鱼的典型形态是「开头 @ + 鱼腔正文」，两个条件同时满足时误伤率接近零；
+              而真人讨论鱼时通常不会 @ 人。
+              <b>A 档词不受此限制</b>——它们是鱼的专属自称，即使没有 @ 也能安全判定。
+            </em>
+          </span>
+          <input type="checkbox" id="keywordsOnlyOnAt" class="qt-switch" />
+        </label>
+
+        <label class="qt-row">
+          <span class="qt-row__main">
+            关键词也作用于楼中楼
+            <em>关闭后只过滤一级评论。</em>
+          </span>
+          <input type="checkbox" id="keywordsInNested" class="qt-switch" />
+        </label>
+      </section>
+
+      <!-- 三、内置词库 -->
+      <section class="qt-section" id="builtin">
+        <div class="qt-section__head">
+          <h3>内置「鱼味关键词」</h3>
+          <button class="qt-mini" id="restoreBuiltin">恢复内置词</button>
+        </div>
+        <p class="qt-note">
+          词库来自三个 DSH 相关视频评论区的真实抽样（40+ 条鱼样本），不是臆测。
+          每条都标注了<strong>原文样本</strong>与<strong>误判风险</strong>，可自行停用或删除。
+        </p>
+        <div id="builtinList" class="qt-kw-list"></div>
+      </section>
+
+      <!-- 四、自定义词 -->
+      <section class="qt-section" id="custom">
+        <div class="qt-section__head">
+          <h3>自定义关键词</h3>
+          <span class="qt-section__hint">补内置词没覆盖到的</span>
+        </div>
+
+        <div class="qt-add">
+          <input type="text" id="customInput" placeholder="输入要屏蔽的词，例如：本鲸" maxlength="40" />
+          <button class="qt-btn qt-btn--primary" id="addCustom">添加</button>
+        </div>
+        <p class="qt-hint" id="customHint"></p>
+        <div id="customList" class="qt-kw-list"></div>
+      </section>
+
+      <!-- 五、预览与显示 -->
+      <section class="qt-section" id="display">
+        <div class="qt-section__head">
+          <h3>预览与显示</h3>
+        </div>
+
+        <label class="qt-row qt-row--accent">
+          <span class="qt-row__main">
+            预览模式（只统计不隐藏）
+            <em>
+              开启后评论照常显示，但右下角浮标会告诉你「本可屏蔽多少条」。
+              用来验证规则是否误伤，确认无误后再关掉。
+            </em>
+          </span>
+          <input type="checkbox" id="previewOnly" class="qt-switch" />
+        </label>
+
+        <label class="qt-row">
+          <span class="qt-row__main">
+            显示右下角统计浮标
+            <em>浮标上会显示已屏蔽数量，点它可以直接打开这个页面。</em>
+          </span>
+          <input type="checkbox" id="showPill" class="qt-switch" />
+        </label>
+      </section>
+
+      <footer class="qt-page-foot">
+        <span id="saveState" class="qt-save">已保存</span>
+        <span class="qt-page-foot__hint">改动需刷新 B站页面生效</span>
+      </footer>
+    </main>
+  </div>
+
+  <script src="keywords.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

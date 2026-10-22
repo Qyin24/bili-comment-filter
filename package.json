@@ -1,0 +1,21 @@
+{
+  "name": "bili-comment-filter",
+  "version": "1.2.0",
+  "private": true,
+  "description": "清塘 · B站评论区过滤器 —— 过滤 B站评论区里的 AI agent 刷屏评论（大肥鱼）",
+  "keywords": [
+    "bilibili",
+    "browser-extension",
+    "manifest-v3",
+    "userscript",
+    "comment-filter",
+    "deepseek-harness"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "test": "node test/filter.test.js && node test/hook.test.js",
+    "test:filter": "node test/filter.test.js",
+    "test:hook": "node test/hook.test.js",
+    "preview": "node preview/server.js 8787"
+  }
+}
