@@ -24,6 +24,9 @@ jobs:
         with:
           node-version: 20
 
+      - name: 校验油猴产物与源码一致
+        run: npm run build:check
+
       - name: 运行测试
         run: npm test
 
