@@ -19,6 +19,9 @@ const url = require('url');
 const ROOT = path.join(__dirname, '..');
 const PORT = Number(process.argv[2] || 8787);
 
+/** 版本唯一来源：manifest.json（v2：桩不再手抄版本号） */
+const MANIFEST = JSON.parse(fs.readFileSync(path.join(ROOT, 'manifest.json'), 'utf8'));
+
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
@@ -37,11 +40,13 @@ function makeStub(query) {
   const allowed = ['light', 'dark', 'auto'];
   const theme = query && allowed.includes(query.theme) ? query.theme : null;
   const seed = theme ? 'store.theme = ' + JSON.stringify(theme) + ';' : '';
+  const fakeDegraded = !!(query && query.degraded === '1');
 
   return [
     '<script>',
     '(function(){',
     '  var store = {};',
+    '  var listeners = [];',
     '  ' + seed,
     '  window.chrome = {',
     '    storage: {',
@@ -51,15 +56,25 @@ function makeStub(query) {
     '        },',
     '        set: function (v, cb) {',
     '          Object.assign(store, v);',
+    '          listeners.forEach(function (fn) { try { fn({}, "local"); } catch (e) {} });',
     '          if (cb) setTimeout(cb, 0);',
     '        }',
     '      },',
-    '      onChanged: { addListener: function () {} }',
+    '      onChanged: { addListener: function (fn) { listeners.push(fn); } }',
     '    },',
     '    runtime: {',
-    "      getManifest: function () { return { version: '1.2.0' }; },",
-    '      openOptionsPage: function () {}',
+    `      getManifest: function () { return { version: ${JSON.stringify(MANIFEST.version)} }; },`,
+    '      openOptionsPage: function () {},',
+    '      sendMessage: function (msg, cb) {',
+    `        if (cb) setTimeout(function () { cb({ ok: true, degraded: ${String(fakeDegraded)} }); }, 0);`,
+    '      }',
+    '    },',
+    '    tabs: {',
+    '      query: function (q, cb) { setTimeout(function () { cb([{ id: 1 }]); }, 0); }',
     '    }',
+    '  };',
+    '  window.__BCF_PREVIEW__ = {',
+    '    getStore: function () { return Object.assign({}, store); }',
     '  };',
     '})();',
     '</script>'
@@ -110,4 +125,6 @@ server.listen(PORT, '127.0.0.1', () => {
   console.log(`  options(dark) : http://127.0.0.1:${PORT}/src/options.html?preview=1&theme=dark`);
   console.log(`  options(light): http://127.0.0.1:${PORT}/src/options.html?preview=1&theme=light`);
   console.log(`  popup(light)  : http://127.0.0.1:${PORT}/src/popup.html?preview=1&theme=light`);
+  console.log(`  popup(degraded): http://127.0.0.1:${PORT}/src/popup.html?preview=1&degraded=1`);
+  console.log(`  pill-demo     : http://127.0.0.1:${PORT}/preview/pill-demo.html?preview=1&theme=dark`);
 });

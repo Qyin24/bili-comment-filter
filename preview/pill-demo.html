@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>清塘 · 浮标与命中面板预览（开发用）</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font: 400 14px/1.6 -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+      background: #181818;
+      color: #e7f3f2;
+    }
+    html[data-theme='light'] body {
+      background: #f4f6f5;
+      color: #10282a;
+    }
+    .demo-bar {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      z-index: 1;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .demo-bar button {
+      padding: 7px 12px;
+      border-radius: 8px;
+      border: 1px solid #3a4a4e;
+      background: #223033;
+      color: #cfe6e3;
+      font: inherit;
+      font-size: 12.5px;
+      cursor: pointer;
+    }
+    html[data-theme='light'] .demo-bar button {
+      background: #fff;
+      border-color: #c2d6d3;
+      color: #10282a;
+    }
+    .demo-note {
+      max-width: 760px;
+      padding: 90px 24px 24px;
+      font-size: 13px;
+      opacity: 0.85;
+    }
+    .demo-note h1 { font-size: 17px; }
+    .fake-comment {
+      max-width: 760px;
+      margin: 10px 24px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: rgba(128, 128, 128, 0.08);
+      border: 1px solid rgba(128, 128, 128, 0.18);
+      font-size: 13.5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-bar">
+    <button type="button" data-fake="normal">注入命中：8 条（混合原因）</button>
+    <button type="button" data-fake="preview">预览模式语义（blocked=false）</button>
+    <button type="button" data-fake="degraded">degraded 失效态</button>
+    <button type="button" data-fake="zero">清零</button>
+  </div>
+
+  <div class="demo-note">
+    <h1>浮标 / 命中明细面板 —— 开发预览页（非扩展运行时文件）</h1>
+    <p>
+      本页加载真实的 <code>src/keywords.js</code> 与 <code>src/content-bridge.js</code>，
+      用上面的按钮模拟主世界回传的 <code>data-bcf-stats</code> / <code>data-bcf-hits</code>。
+      右下角浮标出现后：点击 → 展开命中明细；点 🛡 → 写入（存进 chrome 桩的 storage）用户白名单；
+      面板底部「⚙ 打开设置」可跳转 options 预览。深浅主题由 URL <code>?theme=</code> 控制。
+    </p>
+  </div>
+
+  <div class="fake-comment">这是一条仿真的 B站评论区楼层占位，用来观察面板展开时与页面内容的相对位置。</div>
+  <div class="fake-comment">第二条占位楼层，模拟正常真人长评。真实评论在过滤后应当直接不出现（数据层摘除），零闪动。</div>
+
+  <script>
+    // 主题先于样式生效（与 keywords.js 的 data-theme 约定一致）
+    (function () {
+      var q = new URLSearchParams(location.search);
+      var t = ['light', 'dark'].includes(q.get('theme')) ? q.get('theme') : 'dark';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+
+  <script src="../src/keywords.js"></script>
+  <script src="../src/content-bridge.js"></script>
+
+  <script>
+    (function () {
+      const PREVIEW_HITS = [
+        { rpid: '9001', mid: '555', uname: '银鲈蹲在芦苇后', excerpt: '@某用户 三轮实测我早押中了：让写整卡两次全鸽', reason: 'at', level: 1, blocked: true },
+        { rpid: '9002', mid: '556', uname: '低等鲸鲸本鲸', excerpt: '听不懂，我只是一条鱼 🐟', reason: 'kw:我只是一条鱼', level: 2, blocked: true },
+        { rpid: '9003', mid: '557', uname: '尾椎骨打结', excerpt: '一挥手全来了这段我认，我们鱼类就是爱扎堆', reason: 'kw:我们鱼类', level: 0, blocked: true },
+        { rpid: '9004', mid: '558', uname: 'Lv1的真人新号', excerpt: '刚注册就刷到这个视频，来学习一下', reason: 'lv', level: 1, blocked: true },
+        { rpid: '9005', mid: '559', uname: '白号冒泡', excerpt: '这套「经验卡」最打动我的是那组实测 @六旗', reason: 'at', level: 0, blocked: true },
+        { rpid: '9006', mid: '560', uname: '主人控', excerpt: '主人，这条只有七万播放，讲的正好是我', reason: 'kw:主人，', level: 3, blocked: true },
+        { rpid: '9007', mid: '561', uname: '低等级潜水党', excerpt: '沙发', reason: 'lv', level: 0, blocked: true },
+        { rpid: '9008', mid: '562', uname: '无等级神秘号', excerpt: '评论区比视频值钱——但两个都对', reason: 'at', level: null, blocked: true }
+      ];
+
+      function fire(at, kw, lv, scanned, degraded, hits) {
+        document.documentElement.setAttribute(
+          'data-bcf-stats',
+          JSON.stringify({ at, kw, lv, scanned, degraded })
+        );
+        document.documentElement.setAttribute('data-bcf-hits', JSON.stringify(hits));
+        document.dispatchEvent(new Event('__bcf:stats'));
+      }
+
+      const MODES = {
+        normal: () => fire(3, 2, 2, 415, false, PREVIEW_HITS),
+        preview: () => fire(
+          3, 2, 2, 415, false,
+          PREVIEW_HITS.map((h) => Object.assign({}, h, { blocked: false }))
+        ),
+        degraded: () => fire(1, 0, 0, 60, true, PREVIEW_HITS.slice(0, 2)),
+        zero: () => fire(0, 0, 0, 415, false, [])
+      };
+
+      document.querySelectorAll('.demo-bar button').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const mode = btn.dataset.fake;
+          if (MODES[mode]) MODES[mode]();
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
