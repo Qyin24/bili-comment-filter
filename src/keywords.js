@@ -183,7 +183,16 @@
     }
   ];
 
-  /** 默认设置（首次安装写入 storage） */
+  /**
+   * 默认设置（首次安装写入 storage；v2 全部新增键）
+   *
+   * 保守哲学与 C 档一致：新规则默认关闭 / 高置信度才默认开启。
+   *   levelEnabled    —— 按 Lv 屏蔽误伤真人新号，默认关，阈值默认 Lv≤1
+   *   exemptUp        —— UP 本人在自己视频下发言，默认豁免
+   *   exemptFollowed  —— 我关注的人不滤（未登录时字段恒 0，自动无效果）
+   *   exemptVerified  —— 个人/机构认证号不滤（鱼基本都是白号）
+   *   userAllowlist   —— 命中明细面板「一键白名单」落点，永久放行某个人
+   */
   NS.DEFAULT_SETTINGS = {
     enabled: true,
     blockAtPrefix: true,
@@ -196,7 +205,13 @@
     showPill: true,
     theme: 'auto', // auto | dark | light
     keywordOverrides: {},
-    customKeywords: []
+    customKeywords: [],
+    levelEnabled: false,
+    blockLevelUpTo: 1, // 0–6：屏蔽等级 ≤ 该值的账号
+    exemptUp: true,
+    exemptFollowed: true,
+    exemptVerified: true,
+    userAllowlist: [] // [{mid, uname}]，元素也兼容旧写法纯 mid 字符串
   };
 
   /** ── 主题 ───────────────────────────────────────────────── */
@@ -251,13 +266,17 @@
   /**
    * 把「内置词 + 用户覆盖 + 自定义词」解析成最终生效的关键词数组
    *
-   * 返回 {text, tier} 而不是纯字符串，因为判定层要按档位区别对待：
+   * 返回 {text, tier, regex?} 而不是纯字符串，因为判定层要按档位区别对待：
    *   A 档 —— 鱼的专属自称，即使正文没有 @ 也能判定 → 不受「仅作用于 @ 评论」限制
-   *   B/C/U 档 —— 精度较低 → 受「仅作用于 @ 评论」限制
-   *   U = 用户自定义
+   *   B/C 档 —— 精度较低 → 受「仅作用于 @ 评论」限制
+   *   自定义词 —— v2 起可自选档位（A/B，默认 B）并可声明为正则
+   *
+   * 兼容两种自定义词存储写法：
+   *   v1 旧格式：'词'（字符串）→ 视为 { text, tier:'B' }
+   *   v2 新格式：{ text, tier:'A'|'B', regex?:boolean }
    *
    * @param {object} settings
-   * @returns {{text:string, tier:string}[]}
+   * @returns {{text:string, tier:string, regex?:boolean}[]}
    */
   NS.resolveKeywords = function resolveKeywords(settings) {
     const s = settings || {};
@@ -276,15 +295,53 @@
       out.push({ text: kw.text, tier: kw.tier });
     }
 
-    for (const t of s.customKeywords || []) {
-      const v = String(t || '').trim();
-      if (!v) continue;
-      const key = v.toLowerCase();
+    for (const item of s.customKeywords || []) {
+      let text = '';
+      let tier = 'B';
+      let regex = false;
+      if (typeof item === 'string') {
+        text = item.trim();
+      } else if (item && typeof item === 'object') {
+        text = String(item.text || '').trim();
+        tier = item.tier === 'A' ? 'A' : 'B';
+        regex = !!item.regex;
+      }
+      if (!text) continue;
+      const key = text.toLowerCase();
       if (seen.has(key)) continue;
       seen.add(key);
-      out.push({ text: v, tier: 'U' });
+      out.push(regex ? { text, tier, regex: true } : { text, tier });
     }
 
+    return out;
+  };
+
+  /**
+   * 把任意写法（v1 字符串 / v2 对象）的自定义词归一化为 v2 存储格式。
+   * 只在「写入」侧使用；读取侧 resolveKeywords 已兼容旧格式。
+   * @param {Array} list
+   * @returns {{text:string, tier:string, regex?:boolean}[]}
+   */
+  NS.normalizeCustomKeywords = function normalizeCustomKeywords(list) {
+    const out = [];
+    const seen = new Set();
+    for (const item of list || []) {
+      let text = '';
+      let tier = 'B';
+      let regex = false;
+      if (typeof item === 'string') {
+        text = item.trim();
+      } else if (item && typeof item === 'object') {
+        text = String(item.text || '').trim();
+        tier = item.tier === 'A' ? 'A' : 'B';
+        regex = !!item.regex;
+      }
+      if (!text) continue;
+      const key = text.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(regex ? { text, tier, regex: true } : { text, tier });
+    }
     return out;
   };
 
