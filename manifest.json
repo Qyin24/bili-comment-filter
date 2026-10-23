@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "清塘 · B站评论区过滤器",
   "short_name": "清塘",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "清塘：把 B站评论区这口塘清干净。过滤以 @ 开头的一级 AI 刷屏评论，以及命中所设关键词的评论。纯本地运行，不上传任何数据。",
   "permissions": ["storage"],
   "host_permissions": ["https://*.bilibili.com/*"],

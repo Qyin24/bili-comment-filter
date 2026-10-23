@@ -33,11 +33,30 @@
     exemptSelf: true,
     exemptPinned: true,
     previewOnly: false,
-    keywords: []
+    keywords: [],
+    // ── v2 新增 ──
+    levelEnabled: false,
+    blockLevelUpTo: 1,
+    exemptUp: true,
+    exemptFollowed: true,
+    exemptVerified: true,
+    userAllowlist: []
   };
 
   /** 命中计数（跨请求累计，用于浮标显示） */
-  const tally = { at: 0, kw: 0, scanned: 0 };
+  const tally = { at: 0, kw: 0, lv: 0, scanned: 0 };
+
+  /**
+   * 命中明细（仅内存，刷新即清，不落盘不上传）
+   * 每条：{ rpid, mid, uname, excerpt, reason, level, blocked }
+   */
+  const hits = [];
+  const HITS_MAX = 50;
+
+  /** 接口结构自检：目标接口返回了却找不到任何评论数组 → 视为可能失效 */
+  let degraded = false;
+  let degradedWarned = false;
+
   let statsTimer = null;
 
   /** ── 配置读取 ───────────────────────────────────────────── */
@@ -81,22 +100,47 @@
 
   /** ── 统计回传 ───────────────────────────────────────────── */
 
+  /** 真正写 DOM 属性并派发事件（stats + hits 两个通道） */
+  function doFlushStats() {
+    try {
+      const payload = JSON.stringify({
+        at: tally.at,
+        kw: tally.kw,
+        lv: tally.lv,
+        scanned: tally.scanned,
+        degraded
+      });
+      document.documentElement.setAttribute('data-bcf-stats', payload);
+      // 命中明细：最多 HITS_MAX 条，字段已在写入侧截断
+      document.documentElement.setAttribute(
+        'data-bcf-hits',
+        JSON.stringify(hits)
+      );
+      document.dispatchEvent(new Event(EVT_STATS));
+    } catch {
+      /* 忽略 */
+    }
+  }
+
+  /**
+   * 节流上报。
+   * v1 这里 force 分支被两个 if 双重短路，等于死代码；v2 修正：
+   * force=true 取消待发定时器并立即刷新。
+   * @param {boolean} [force]
+   */
   function flushStats(force) {
-    if (statsTimer && !force) return;
+    if (force) {
+      if (statsTimer) {
+        clearTimeout(statsTimer);
+        statsTimer = null;
+      }
+      doFlushStats();
+      return;
+    }
     if (statsTimer) return;
     statsTimer = setTimeout(() => {
       statsTimer = null;
-      try {
-        const payload = JSON.stringify({
-          at: tally.at,
-          kw: tally.kw,
-          scanned: tally.scanned
-        });
-        document.documentElement.setAttribute('data-bcf-stats', payload);
-        document.dispatchEvent(new Event(EVT_STATS));
-      } catch {
-        /* 忽略 */
-      }
+      doFlushStats();
     }, 120);
   }
 
@@ -104,6 +148,31 @@
 
   const F = NS.filter;
   if (!F) return; // filter.js 未就绪则放弃（不该发生）
+
+  /**
+   * 记录一条命中摘要（供浮标明细面板排查误伤）。
+   * 预览与拦截两种模式都记录——面板的意义正是「让你看清杀了谁」。
+   * @param {object} reply
+   * @param {string} reason 'at' | 'lv' | 'kw:xxx'
+   * @param {object} cfg
+   */
+  function recordHit(reply, reason, cfg) {
+    try {
+      const msg = String((reply && reply.content && reply.content.message) || '');
+      hits.unshift({
+        rpid: String((reply && (reply.rpid_str || reply.rpid)) || ''),
+        mid: F.authorMid(reply),
+        uname: String((reply && reply.member && reply.member.uname) || '').slice(0, 12),
+        excerpt: msg.slice(0, 40),
+        reason,
+        level: F.extractLevel(reply),
+        blocked: !cfg.previewOnly
+      });
+      if (hits.length > HITS_MAX) hits.length = HITS_MAX;
+    } catch {
+      /* 忽略 */
+    }
+  }
 
   /**
    * 处理一组 reply
@@ -114,6 +183,7 @@
 
     const o = opts || {};
     const selfMid = cfg.exemptSelf ? getSelfMid() : null;
+    const upMid = o.upMid ? String(o.upMid) : '';
     let changed = false;
     const out = [];
 
@@ -129,16 +199,21 @@
         !!selfMid &&
         reply.member &&
         String(reply.member.mid) === String(selfMid);
+      const isUp = !!upMid && F.authorMid(reply) === upMid;
 
       const reason = F.shouldBlock(reply, cfg, {
         nested: !!o.nested,
         isPinned: !!o.pinned,
-        isSelf
+        isSelf,
+        isUp
       });
 
       if (reason) {
         if (reason === 'at') tally.at += 1;
+        else if (reason === 'lv') tally.lv += 1;
         else tally.kw += 1;
+
+        recordHit(reply, reason, cfg);
 
         // 预览模式：只统计，不隐藏
         if (!cfg.previewOnly) {
@@ -151,7 +226,7 @@
 
       // 一级评论里内嵌的「楼中楼预览」也要处理
       if (Array.isArray(reply.replies) && reply.replies.length) {
-        const sub = processReplies(reply.replies, cfg, { nested: true, pinned: false });
+        const sub = processReplies(reply.replies, cfg, { nested: true, pinned: false, upMid: o.upMid });
         if (sub.changed) {
           reply.replies = sub.list;
           changed = true;
@@ -180,9 +255,26 @@
     let changed = false;
     const isNestedApi = /\/x\/v2\/reply\/reply/.test(url);
 
+    // ── 结构自检（v2）─────────────────────────────────────
+    // code===0 却找不到任何已知评论数组 → B站大概率改版了，
+    // 过滤会静默失效，这里至少让用户和 console 知道。
+    if (isNestedApi) {
+      if (data.code === 0 && !Array.isArray(root.replies)) markDegraded(url);
+    } else if (
+      data.code === 0 &&
+      !Array.isArray(root.replies) &&
+      !Array.isArray(root.hots) &&
+      !Array.isArray(root.top_replies)
+    ) {
+      markDegraded(url);
+    }
+
+    // UP 主 mid（豁免 UP 本人用）；未登录响应也带这个字段
+    const upMid = root.upper && root.upper.mid ? String(root.upper.mid) : '';
+
     if (isNestedApi) {
       // 楼中楼接口：全部按 nested 处理，结构规则不生效
-      const r = processReplies(root.replies, cfg, { nested: true, pinned: false });
+      const r = processReplies(root.replies, cfg, { nested: true, pinned: false, upMid });
       if (r.changed) {
         root.replies = r.list;
         changed = true;
@@ -192,7 +284,7 @@
 
     // 一级评论接口
     if (!cfg.exemptPinned) {
-      const r = processReplies(root.top_replies, cfg, { nested: false, pinned: true });
+      const r = processReplies(root.top_replies, cfg, { nested: false, pinned: true, upMid });
       if (r.changed) {
         root.top_replies = r.list;
         changed = true;
@@ -200,7 +292,7 @@
     }
 
     for (const key of ['replies', 'hots']) {
-      const r = processReplies(root[key], cfg, { nested: false, pinned: false });
+      const r = processReplies(root[key], cfg, { nested: false, pinned: false, upMid });
       if (r.changed) {
         root[key] = r.list;
         changed = true;
@@ -208,6 +300,19 @@
     }
 
     return changed;
+  }
+
+  /** 结构自检置位 + 一次性告警 */
+  function markDegraded(url) {
+    degraded = true;
+    if (!degradedWarned) {
+      degradedWarned = true;
+      try {
+        console.warn('[清塘] B站评论接口结构变化，过滤可能已失效：', url);
+      } catch {
+        /* 忽略 */
+      }
+    }
   }
 
   /** ── 目标 URL 判定 ──────────────────────────────────────── */
@@ -242,6 +347,11 @@
             : '';
 
       if (!isTargetUrl(url)) {
+        return origFetch.apply(this, arguments);
+      }
+
+      // v2 性能：配置已就绪且确认总开关关闭 → 不 clone、不读大响应体
+      if (configLoaded && config.enabled === false) {
         return origFetch.apply(this, arguments);
       }
 
@@ -303,7 +413,7 @@
     XHR.prototype.send = function patchedSend() {
       try {
         const url = this.__bcfUrl || '';
-        if (isTargetUrl(url)) {
+        if (isTargetUrl(url) && !(configLoaded && config.enabled === false)) {
           const xhr = this;
           xhr.addEventListener('readystatechange', () => {
             if (xhr.readyState !== 4) return;
@@ -387,10 +497,16 @@
   NS.debug = {
     getConfig: () => config,
     getTally: () => Object.assign({}, tally),
+    getHits: () => hits.slice(),
+    isDegraded: () => degraded,
     resetTally: () => {
       tally.at = 0;
       tally.kw = 0;
+      tally.lv = 0;
       tally.scanned = 0;
+      hits.length = 0;
+      degraded = false;
+      degradedWarned = false;
       flushStats(true);
     }
   };

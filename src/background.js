@@ -5,9 +5,15 @@
  *   1. 首次安装时补齐默认设置
  *   2. 接收内容脚本上报的命中数 → 更新工具栏徽标
  *   3. 处理「打开设置页」请求
+ *   4. v2：默认设置改从 keywords.js 单源取（importScripts），不再手抄一份；
+ *      顺带记录各标签页的「接口失效」状态，供弹窗查询
  */
 
-const DEFAULT_SETTINGS = {
+// classic service worker：可以直接 importScripts
+importScripts('keywords.js');
+
+const NS = globalThis.__BCF__ || {};
+const DEFAULT_SETTINGS = NS.DEFAULT_SETTINGS || {
   enabled: true,
   blockAtPrefix: true,
   keywordEnabled: true,
@@ -19,10 +25,19 @@ const DEFAULT_SETTINGS = {
   showPill: true,
   theme: 'auto',
   keywordOverrides: {},
-  customKeywords: []
+  customKeywords: [],
+  levelEnabled: false,
+  blockLevelUpTo: 1,
+  exemptUp: true,
+  exemptFollowed: true,
+  exemptVerified: true,
+  userAllowlist: []
 };
 
 const BADGE_COLOR = '#4a7dff';
+
+/** tabId → 接口结构是否可能已失效（内存态，SW 休眠即清，弹窗轮询会重建） */
+const degradedTabs = new Map();
 
 async function ensureDefaults() {
   try {
@@ -48,6 +63,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'bcf:badge') {
     const count = Math.max(0, Number(msg.count) || 0);
     const tabId = sender && sender.tab && sender.tab.id;
+    if (typeof tabId === 'number') {
+      degradedTabs.set(tabId, !!msg.degraded);
+    }
     try {
       if (typeof tabId === 'number') {
         chrome.action.setBadgeText({
@@ -68,6 +86,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return false;
   }
 
+  if (msg.type === 'bcf:degradedStatus') {
+    const tabId = Number(msg.tabId);
+    sendResponse({ degraded: Number.isFinite(tabId) ? !!degradedTabs.get(tabId) : false });
+    return false;
+  }
+
   if (msg.type === 'bcf:openOptions') {
     try {
       chrome.runtime.openOptionsPage();
@@ -80,3 +104,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
   return false;
 });
+
+try {
+  chrome.tabs.onRemoved.addListener((tabId) => {
+    degradedTabs.delete(tabId);
+  });
+} catch (e) {
+  /* 忽略 */
+}
