@@ -9,12 +9,14 @@
 *.zip binary
 
 # ── 以下内容不进入发布包（git archive 会跳过它们）──────────
-# 发布包 = 解压即用的扩展，只需 manifest + src + assets + userscript + 说明
+# 发布包 = 解压即用的扩展，只需 manifest + src + assets + userscript 产物 + 说明
 /test export-ignore
 /preview export-ignore
 /docs export-ignore
 /.github export-ignore
+/build export-ignore
 /build.ps1 export-ignore
 /package.json export-ignore
+/userscript/source export-ignore
 /.gitignore export-ignore
 /.gitattributes export-ignore

@@ -33,6 +33,11 @@ try {
       Copy-Item $p -Destination $stageRoot -Recurse
     }
   }
+  # userscript/ 整目录里混着构建源码；发布包只保留产物 .user.js
+  $userSource = Join-Path $stageRoot 'userscript/source'
+  if (Test-Path $userSource) {
+    Remove-Item $userSource -Recurse -Force
+  }
 
   $zipPath = Join-Path $distDir $zipName
   if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
