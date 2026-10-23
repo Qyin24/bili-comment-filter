@@ -376,3 +376,15 @@ body {
 .qt-tip.is-warn b {
   color: var(--qt-amber-text);
 }
+
+/* ── v2：接口失效提醒行 ───────────────────────── */
+.qt-degraded {
+  margin: 0 0 2px;
+  padding: 9px 12px;
+  border-radius: var(--qt-radius);
+  border: 1px solid var(--qt-amber);
+  background: rgba(224, 161, 92, 0.09);
+  color: var(--qt-amber-text);
+  font-size: 12px;
+  line-height: 1.5;
+}

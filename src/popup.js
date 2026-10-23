@@ -20,7 +20,7 @@
   };
   const resolveKeywords = NS.resolveKeywords || (() => []);
 
-  const FIELDS = ['enabled', 'blockAtPrefix', 'keywordEnabled', 'previewOnly'];
+  const FIELDS = ['enabled', 'blockAtPrefix', 'keywordEnabled', 'previewOnly', 'levelEnabled'];
 
   const THEME_CYCLE = ['auto', 'dark', 'light'];
   const THEME_META = {
@@ -34,13 +34,15 @@
     blockAtPrefix: document.getElementById('blockAtPrefix'),
     keywordEnabled: document.getElementById('keywordEnabled'),
     previewOnly: document.getElementById('previewOnly'),
+    levelEnabled: document.getElementById('levelEnabled'),
     kwCount: document.getElementById('kwCount'),
     openOptions: document.getElementById('openOptions'),
     version: document.getElementById('version'),
     tip: document.getElementById('tip'),
     hero: document.getElementById('hero'),
     heroSub: document.getElementById('heroSub'),
-    themeBtn: document.getElementById('themeBtn')
+    themeBtn: document.getElementById('themeBtn'),
+    degradedLine: document.getElementById('degradedLine')
   };
 
   let settings = Object.assign({}, DEFAULT_SETTINGS);
@@ -80,6 +82,7 @@
     if (el.blockAtPrefix) el.blockAtPrefix.disabled = off;
     if (el.keywordEnabled) el.keywordEnabled.disabled = off;
     if (el.previewOnly) el.previewOnly.disabled = off;
+    if (el.levelEnabled) el.levelEnabled.disabled = off;
 
     // 主状态卡
     if (el.hero) el.hero.classList.toggle('is-off', off);
@@ -122,6 +125,27 @@
     }
 
     renderTheme();
+    checkDegraded();
+  }
+
+  /**
+   * v2：向 service worker 查当前活动标签页的「接口失效」状态。
+   * tabs.query 只取 id（不需要额外权限）；SW 内存态丢失时返回 false，属正常降级。
+   */
+  function checkDegraded() {
+    if (!el.degradedLine) return;
+    try {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        const tabId = tabs && tabs[0] && tabs[0].id;
+        if (typeof tabId !== 'number') return;
+        chrome.runtime.sendMessage({ type: 'bcf:degradedStatus', tabId }, (resp) => {
+          const degraded = !!(resp && resp.degraded);
+          el.degradedLine.hidden = !degraded;
+        });
+      });
+    } catch {
+      /* 忽略 */
+    }
   }
 
   function save(patch) {

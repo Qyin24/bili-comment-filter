@@ -35,6 +35,9 @@
         <a href="#basic" class="qt-nav__item is-active">
           <span class="qt-nav__dot"></span>基础规则
         </a>
+        <a href="#level" class="qt-nav__item">
+          <span class="qt-nav__dot"></span>等级与豁免
+        </a>
         <a href="#keywords" class="qt-nav__item">
           <span class="qt-nav__dot"></span>关键词屏蔽
         </a>
@@ -46,6 +49,9 @@
         </a>
         <a href="#display" class="qt-nav__item">
           <span class="qt-nav__dot"></span>预览与显示
+        </a>
+        <a href="#data" class="qt-nav__item">
+          <span class="qt-nav__dot"></span>数据
         </a>
       </nav>
 
@@ -64,7 +70,7 @@
       </div>
 
       <div class="qt-side__foot">
-        <span id="sideVersion">v1.1.0</span>
+        <span id="sideVersion">v—</span>
         <span class="qt-side__dot">·</span>
         <span>纯本地运行</span>
       </div>
@@ -122,7 +128,76 @@
         </label>
       </section>
 
-      <!-- 二、关键词屏蔽 -->
+      <!-- 二、等级与豁免（v2） -->
+      <section class="qt-section" id="level">
+        <div class="qt-section__head">
+          <h3>等级与豁免</h3>
+          <span class="qt-section__hint">按账号身份判</span>
+        </div>
+
+        <label class="qt-row qt-row--accent">
+          <span class="qt-row__main">
+            按 B站账号等级屏蔽评论
+            <em>
+              <b>默认关闭。</b>低等级≠是鱼：刚注册玩 B站 的真人新号也在这里。
+              建议先开「预览模式」看看会杀掉多少条，再决定阈值。等级字段取不到时一律放行，绝不误杀未知账号。
+            </em>
+          </span>
+          <input type="checkbox" id="levelEnabled" class="qt-switch" />
+        </label>
+
+        <div class="qt-row qt-row--sub">
+          <span class="qt-row__main">
+            屏蔽等级<b>不高于</b>所选档位的账号
+            <em>选 Lv1 即屏蔽 Lv0 与 Lv1 的所有评论。</em>
+          </span>
+          <select id="blockLevelUpTo" class="qt-select" aria-label="等级阈值">
+            <option value="0">Lv0</option>
+            <option value="1">Lv1</option>
+            <option value="2">Lv2</option>
+            <option value="3">Lv3</option>
+            <option value="4">Lv4</option>
+            <option value="5">Lv5</option>
+            <option value="6">Lv6</option>
+          </select>
+        </div>
+
+        <label class="qt-row">
+          <span class="qt-row__main">
+            豁免 UP 主本人的评论
+            <em>UP 在自己视频下发言（常含置顶/补充信息），任何规则都不该动他。</em>
+          </span>
+          <input type="checkbox" id="exemptUp" class="qt-switch" />
+        </label>
+
+        <label class="qt-row">
+          <span class="qt-row__main">
+            豁免我关注的人
+            <em>需要 B站 登录态：接口只对已登录请求返回关注标记，未登录时这条自动无效果。</em>
+          </span>
+          <input type="checkbox" id="exemptFollowed" class="qt-switch" />
+        </label>
+
+        <label class="qt-row">
+          <span class="qt-row__main">
+            豁免认证账号
+            <em>个人认证 / 机构认证的号几乎不会是刷量 agent，默认放行。</em>
+          </span>
+          <input type="checkbox" id="exemptVerified" class="qt-switch" />
+        </label>
+
+        <div class="qt-section__head qt-section__head--tight">
+          <h3>用户白名单</h3>
+          <span class="qt-section__hint">这些人永远放行</span>
+        </div>
+        <p class="qt-note">
+          被误伤的作者，可在右下角浮标的「命中明细」里点 🛡 一键加入；这里负责删。
+          改动需刷新 B站 页面生效。
+        </p>
+        <div id="allowList" class="qt-kw-list"></div>
+      </section>
+
+      <!-- 三、关键词屏蔽 -->
       <section class="qt-section" id="keywords">
         <div class="qt-section__head">
           <h3>关键词屏蔽</h3>
@@ -155,7 +230,7 @@
         </label>
       </section>
 
-      <!-- 三、内置词库 -->
+      <!-- 四、内置词库 -->
       <section class="qt-section" id="builtin">
         <div class="qt-section__head">
           <h3>内置「鱼味关键词」</h3>
@@ -168,7 +243,7 @@
         <div id="builtinList" class="qt-kw-list"></div>
       </section>
 
-      <!-- 四、自定义词 -->
+      <!-- 五、自定义词（v2：可选档位 / 可声明正则） -->
       <section class="qt-section" id="custom">
         <div class="qt-section__head">
           <h3>自定义关键词</h3>
@@ -176,14 +251,22 @@
         </div>
 
         <div class="qt-add">
-          <input type="text" id="customInput" placeholder="输入要屏蔽的词，例如：本鲸" maxlength="40" />
+          <input type="text" id="customInput" placeholder="输入要屏蔽的词，例如：本鲸" maxlength="60" />
+          <select id="customTier" class="qt-select" title="档位">
+            <option value="B">B 档 · 仅 @ 评论</option>
+            <option value="A">A 档 · 无需 @</option>
+          </select>
+          <label class="qt-check">
+            <input type="checkbox" id="customRegex" />
+            <span>正则</span>
+          </label>
           <button class="qt-btn qt-btn--primary" id="addCustom">添加</button>
         </div>
         <p class="qt-hint" id="customHint"></p>
         <div id="customList" class="qt-kw-list"></div>
       </section>
 
-      <!-- 五、预览与显示 -->
+      <!-- 六、预览与显示 -->
       <section class="qt-section" id="display">
         <div class="qt-section__head">
           <h3>预览与显示</h3>
@@ -207,6 +290,24 @@
           </span>
           <input type="checkbox" id="showPill" class="qt-switch" />
         </label>
+      </section>
+
+      <!-- 七、数据（v2：导入导出） -->
+      <section class="qt-section" id="data">
+        <div class="qt-section__head">
+          <h3>数据</h3>
+          <span class="qt-section__hint">备份 · 迁移 · 分享预设</span>
+        </div>
+        <p class="qt-note">
+          导出的 JSON 只包含本页设置（开关、词库覆盖、自定义词、白名单、主题），
+          不含任何账号信息与评论内容。换浏览器时导入即可原样恢复。
+        </p>
+        <div class="qt-add">
+          <button class="qt-btn" id="exportBtn">导出配置</button>
+          <button class="qt-btn" id="importBtn">导入配置</button>
+          <input type="file" id="importFile" accept="application/json,.json" hidden />
+        </div>
+        <p class="qt-hint" id="dataHint"></p>
       </section>
 
       <footer class="qt-page-foot">

@@ -819,3 +819,110 @@ body {
     padding: 26px 20px 56px;
   }
 }
+
+/* ── v2 新增控件 ──────────────────────────────── */
+
+/* 等级阈值选择框 */
+.qt-select {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  padding: 7px 10px;
+  border-radius: var(--qt-radius-sm);
+  border: 1px solid var(--qt-line);
+  background: var(--qt-input-bg);
+  color: var(--qt-text);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, opacity 0.16s ease;
+}
+
+.qt-select:hover {
+  border-color: var(--qt-kw-border-hover);
+}
+
+.qt-select:focus-visible {
+  border-color: var(--qt-teal-line);
+  box-shadow: 0 0 0 3px var(--qt-teal-soft);
+}
+
+.qt-select:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.qt-select option {
+  background: var(--qt-surface);
+  color: var(--qt-text);
+}
+
+/* 从属行（挂在上一开关下的参数行），视觉收紧 */
+.qt-row--sub {
+  margin: -4px 0 0;
+  padding: 9px 0 9px 14px;
+  border-left: 2px solid var(--qt-teal-line);
+  cursor: default;
+}
+
+.qt-row--sub .qt-row__main {
+  font-size: 12.5px;
+}
+
+/* 小节内的紧凑二级标题（白名单等子块） */
+.qt-section__head--tight {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--qt-line-soft);
+}
+
+/* 添加行里的小复选（正则开关） */
+.qt-check {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px;
+  font-size: 12.5px;
+  color: var(--qt-text-mid);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.qt-check input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  border-radius: 4px;
+  border: 1px solid var(--qt-line);
+  background: var(--qt-input-bg);
+  cursor: pointer;
+  position: relative;
+  transition: background 0.14s ease, border-color 0.14s ease;
+}
+
+.qt-check input[type="checkbox"]:checked {
+  background: var(--qt-teal);
+  border-color: var(--qt-teal);
+}
+
+.qt-check input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+:root[data-theme='light'] .qt-check input[type="checkbox"]:checked::after {
+  border-color: #fff;
+}
+

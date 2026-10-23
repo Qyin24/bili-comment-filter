@@ -28,7 +28,7 @@
     </div>
     <div class="qt-head__right">
       <button type="button" class="qt-theme-btn" id="themeBtn" title="切换外观：自动">◐</button>
-      <span class="qt-ver" id="version">v1.2.0</span>
+      <span class="qt-ver" id="version">v—</span>
     </div>
   </header>
 
@@ -63,7 +63,20 @@
         </span>
         <input type="checkbox" id="keywordEnabled" class="qt-switch" />
       </label>
+
+      <label class="qt-row">
+        <span class="qt-row__main">
+          按 B站账号等级屏蔽
+          <em>默认关 · Lv 阈值在设置页调</em>
+        </span>
+        <input type="checkbox" id="levelEnabled" class="qt-switch" />
+      </label>
     </section>
+
+    <!-- 失效提醒（v2）：仅在活动 B站 页检测到接口结构异常时显示 -->
+    <p class="qt-degraded" id="degradedLine" hidden>
+      ⚠ 本页评论接口结构与预期不符，过滤可能已失效（B站可能改版）
+    </p>
 
     <!-- 预览 -->
     <section class="qt-card">
