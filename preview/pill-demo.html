@@ -86,6 +86,15 @@
       var q = new URLSearchParams(location.search);
       var t = ['light', 'dark'].includes(q.get('theme')) ? q.get('theme') : 'dark';
       document.documentElement.setAttribute('data-theme', t);
+      // ?pad=N：把浮标/面板左移 N px。截图时避开浏览器右侧扩展悬浮物用，仅开发页存在
+      var pad = parseInt(q.get('pad') || '0', 10);
+      if (pad > 0) {
+        var st = document.createElement('style');
+        st.textContent =
+          '#__bcf-pill{right:' + (18 + pad) + 'px !important}' +
+          '#__bcf-panel{right:' + (18 + pad) + 'px !important}';
+        document.head.appendChild(st);
+      }
     })();
   </script>
 

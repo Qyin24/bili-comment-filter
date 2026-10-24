@@ -22,7 +22,7 @@
 
 > 如果图片显示不出来（部分网络环境会拦截 GitHub 图床 `camo.githubusercontent.com`），可以直接打开 [`docs/screenshots/`](docs/screenshots) 目录查看原图。
 
-设置页（深色）：
+设置页（深色 · 「等级与豁免」分区）：
 
 ![设置页 深色](docs/screenshots/options-dark.png)
 
@@ -36,6 +36,10 @@
   <img src="docs/screenshots/popup-dark.png" alt="弹窗 深色" width="300" />
   <img src="docs/screenshots/popup-light.png" alt="弹窗 浅色" width="300" />
 </p>
+
+命中明细面板（v2 · 点右下角浮标展开，🛡 一键白名单）：
+
+![命中明细面板](docs/screenshots/hits-panel-dark.png)
 
 ---
 
